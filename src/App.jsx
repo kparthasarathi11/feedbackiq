@@ -36,7 +36,13 @@ export default function App() {
       />
       <Route
         path="/dashboard"
-        element={<ProtectedRoute><UserDashboard /></ProtectedRoute>}
+        element={
+          <ProtectedRoute>
+            {profile?.role === 'admin'
+              ? <Navigate to="/admin" replace />
+              : <UserDashboard />}
+          </ProtectedRoute>
+        }
       />
       <Route
         path="/admin"
@@ -44,7 +50,11 @@ export default function App() {
       />
       <Route
         path="*"
-        element={<Navigate to={user ? (profile?.role === 'admin' ? '/admin' : '/dashboard') : '/auth'} replace />}
+        element={
+          loading ? null : (
+            <Navigate to={user ? (profile?.role === 'admin' ? '/admin' : '/dashboard') : '/auth'} replace />
+          )
+        }
       />
     </Routes>
   )
