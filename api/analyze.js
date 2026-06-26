@@ -3,9 +3,8 @@ export default async function handler(req, res) {
 
   const { feedbackText, productName } = req.body
 
-// OLD
-const apiKey = process.env.VITE_GEMINI_API_KEY
-  const apiKey = process.env.VITE_GEMINI_API_KEY
+// NEW
+const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) return res.status(500).json({ error: 'Missing Gemini API key' })
 
   const prompt = `You are a product feedback analyst. Analyze the following feedback and return ONLY a valid JSON object with no extra text, markdown, or explanation.
