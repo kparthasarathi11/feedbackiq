@@ -20,15 +20,26 @@ export default function AuthPage() {
     setSuccess('')
     setLoading(true)
 
-    if (isLogin) {
-      const { data, error } = await signIn(email, password)
-      if (error) { setError(error.message); setLoading(false); return }
-      // redirect handled by App.jsx after profile loads
-    } else {
-      const { data, error } = await signUp(email, password)
-      if (error) { setError(error.message); setLoading(false); return }
-      setSuccess('Account created! You can now sign in.')
-      setIsLogin(true)
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password)
+        if (error) {
+          setError(error.message || 'Sign in failed. Please try again.')
+          setLoading(false)
+          return
+        }
+      } else {
+        const { error } = await signUp(email, password)
+        if (error) {
+          setError(error.message || 'Sign up failed. Please try again.')
+          setLoading(false)
+          return
+        }
+        setSuccess('Account created! You can now sign in.')
+        setIsLogin(true)
+      }
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
     }
 
     setLoading(false)
@@ -39,7 +50,6 @@ export default function AuthPage() {
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
 
-          {/* Logo */}
           <div className="text-center mb-8">
             <div className="w-12 h-12 rounded-full bg-brand flex items-center justify-center mx-auto mb-4">
               <span className="text-white font-semibold text-sm">FQ</span>
@@ -48,7 +58,6 @@ export default function AuthPage() {
             <p className="text-sm text-gray-400 mt-1">AI-powered feedback triage for PMs</p>
           </div>
 
-          {/* Card */}
           <div className="card">
             <h2 className="text-base font-semibold text-gray-900 mb-5">
               {isLogin ? 'Sign in' : 'Create account'}
