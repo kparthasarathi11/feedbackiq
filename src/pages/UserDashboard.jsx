@@ -24,6 +24,47 @@ function PriorityBadge({ value }) {
   return <span className={map[value] || 'badge-low'}>{value}</span>
 }
 
+async function analyzeWithGemini(feedbackText, productName) {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+  if (!apiKey) throw new Error('No Gemini API key found')
+
+  const prompt = `You are a product feedback analyst. Analyze the following feedback and return ONLY a valid JSON object with no extra text, markdown, or explanation.
+
+Product: ${productName || 'Unknown'}
+Feedback: "${feedbackText}"
+
+Return exactly this JSON structure:
+{
+  "sentiment": "Positive" or "Neutral" or "Negative",
+  "priority": "High" or "Medium" or "Low",
+  "tags": ["tag1", "tag2"] (2-4 lowercase tags like: bug, ux, performance, feature-request, onboarding, pricing, design, speed, reliability, support),
+  "summary": "One sentence summary under 15 words"
+}
+
+Rules:
+- High priority = strong negative emotion, blocking issue, data loss, or security
+- Medium priority = friction, confusion, missing feature
+- Low priority = positive feedback, minor suggestions
+- Tags must be lowercase with hyphens, no #`
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 200, temperature: 0.1 },
+      }),
+    }
+  )
+
+  const data = await res.json()
+  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const cleaned = raw.replace(/```json|```/g, '').trim()
+  return JSON.parse(cleaned)
+}
+
 export default function UserDashboard() {
   const { user } = useAuth()
   const [productName, setProductName] = useState('')
@@ -55,18 +96,17 @@ export default function UserDashboard() {
     setSuccess('')
 
     try {
-      // Call Supabase Edge Function to analyze with AI
-      const { data: fnData, error: fnError } = await supabase.functions.invoke('analyze-feedback', {
-        body: { feedbackText, productName }
-      })
-
       let sentiment = 'Neutral', priority = 'Medium', tags = [], ai_summary = ''
 
-      if (!fnError && fnData) {
-        sentiment = fnData.sentiment || 'Neutral'
-        priority = fnData.priority || 'Medium'
-        tags = fnData.tags || []
-        ai_summary = fnData.summary || ''
+      try {
+        const result = await analyzeWithGemini(feedbackText, productName)
+        sentiment = result.sentiment || 'Neutral'
+        priority = result.priority || 'Medium'
+        tags = result.tags || []
+        ai_summary = result.summary || ''
+      } catch (aiErr) {
+        console.error('Gemini error:', aiErr)
+        // fallback defaults already set above
       }
 
       const { error: insertError } = await supabase.from('feedbacks').insert({
@@ -89,6 +129,7 @@ export default function UserDashboard() {
       setFeedbackText('')
       fetchMyFeedbacks()
     } catch (err) {
+      console.error(err)
       setError('Something went wrong. Please try again.')
     }
 
@@ -101,7 +142,6 @@ export default function UserDashboard() {
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-8">
 
-        {/* Submit Form */}
         <div className="card mb-8">
           <h2 className="text-base font-semibold text-gray-900 mb-1">Submit feedback</h2>
           <p className="text-xs text-gray-400 mb-5">AI will instantly tag and analyze your feedback</p>
@@ -154,7 +194,6 @@ export default function UserDashboard() {
           </form>
         </div>
 
-        {/* Past Submissions */}
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Your past submissions</h3>
 
