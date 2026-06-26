@@ -23,47 +23,17 @@ function PriorityBadge({ value }) {
   }
   return <span className={map[value] || 'badge-low'}>{value}</span>
 }
-
 async function analyzeWithGemini(feedbackText, productName) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('No Gemini API key found')
+  const res = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ feedbackText, productName }),
+  })
 
-  const prompt = `You are a product feedback analyst. Analyze the following feedback and return ONLY a valid JSON object with no extra text, markdown, or explanation.
-
-Product: ${productName || 'Unknown'}
-Feedback: "${feedbackText}"
-
-Return exactly this JSON structure:
-{
-  "sentiment": "Positive" or "Neutral" or "Negative",
-  "priority": "High" or "Medium" or "Low",
-  "tags": ["tag1", "tag2"] (2-4 lowercase tags like: bug, ux, performance, feature-request, onboarding, pricing, design, speed, reliability, support),
-  "summary": "One sentence summary under 15 words"
+  if (!res.ok) throw new Error('API call failed')
+  return res.json()
 }
 
-Rules:
-- High priority = strong negative emotion, blocking issue, data loss, or security
-- Medium priority = friction, confusion, missing feature
-- Low priority = positive feedback, minor suggestions
-- Tags must be lowercase with hyphens, no #`
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 200, temperature: 0.1 },
-      }),
-    }
-  )
-
-  const data = await res.json()
-  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  const cleaned = raw.replace(/```json|```/g, '').trim()
-  return JSON.parse(cleaned)
-}
 
 export default function UserDashboard() {
   const { user } = useAuth()
