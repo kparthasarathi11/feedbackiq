@@ -3,9 +3,14 @@ export default async function handler(req, res) {
 
   const { feedbackText, productName } = req.body
 
-// NEW
-const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) return res.status(500).json({ error: 'Missing Gemini API key' })
+  if (!feedbackText) return res.status(400).json({ error: 'feedbackText required' })
+
+  const apiKey = process.env.GEMINI_API_KEY
+  
+  // Temporary debug — remove after fixing
+  if (!apiKey) {
+    return res.status(500).json({ error: 'GEMINI_API_KEY is not set in environment' })
+  }
 
   const prompt = `You are a product feedback analyst. Analyze the following feedback and return ONLY a valid JSON object with no extra text, markdown, or explanation.
 
@@ -41,13 +46,26 @@ Rules:
     )
 
     const data = await geminiRes.json()
+    
+    // Log what Gemini actually returned
+    console.log('Gemini response status:', geminiRes.status)
+    console.log('Gemini response data:', JSON.stringify(data))
+
+    if (!geminiRes.ok) {
+      return res.status(500).json({ 
+        error: 'Gemini API error', 
+        status: geminiRes.status,
+        details: data 
+      })
+    }
+
     const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
     const cleaned = raw.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(cleaned)
 
     return res.status(200).json(parsed)
   } catch (err) {
-    console.error('Gemini error:', err)
-    return res.status(500).json({ error: 'Gemini call failed' })
+    console.error('Gemini error:', err.message)
+    return res.status(500).json({ error: err.message })
   }
 }
