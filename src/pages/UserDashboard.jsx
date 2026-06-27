@@ -11,7 +11,11 @@ function SentimentBadge({ value }) {
     Negative: 'badge-negative',
     Neutral: 'badge-neutral',
   }
-  return <span className={map[value] || 'badge-neutral'}>{value}</span>
+  return (
+    <span className={map[value] || 'badge-neutral'}>
+      😊 {value === 'Positive' ? 'Positive feedback' : value === 'Negative' ? 'Negative feedback' : 'Neutral feedback'}
+    </span>
+  )
 }
 
 function PriorityBadge({ value }) {
@@ -21,19 +25,72 @@ function PriorityBadge({ value }) {
     Medium: 'badge-medium',
     Low: 'badge-low',
   }
-  return <span className={map[value] || 'badge-low'}>{value}</span>
+  const icons = { High: '🔴', Medium: '🟡', Low: '🟢' }
+  const labels = {
+    High: 'Needs urgent attention',
+    Medium: 'Will be reviewed soon',
+    Low: 'Nice to have',
+  }
+  return (
+    <span className={map[value] || 'badge-low'}>
+      {icons[value]} {labels[value]}
+    </span>
+  )
 }
-async function analyzeWithGemini(feedbackText, productName) {
+
+function AILegend() {
+  return (
+    <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-6">
+      <p className="text-xs font-semibold text-brand mb-2">✦ How AI analyzes your feedback</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-xs font-medium text-gray-600 mb-1.5">Sentiment — how you feel</p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="badge-positive text-[10px]">😊 Positive</span>
+              <span className="text-[10px] text-gray-400">You're happy with it</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="badge-negative text-[10px]">😤 Negative</span>
+              <span className="text-[10px] text-gray-400">Something frustrated you</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="badge-neutral text-[10px]">😐 Neutral</span>
+              <span className="text-[10px] text-gray-400">Suggestion or observation</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-gray-600 mb-1.5">Priority — how urgent it is</p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="badge-high text-[10px]">🔴 High</span>
+              <span className="text-[10px] text-gray-400">Blocking or critical issue</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="badge-medium text-[10px]">🟡 Medium</span>
+              <span className="text-[10px] text-gray-400">Friction or missing feature</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="badge-low text-[10px]">🟢 Low</span>
+              <span className="text-[10px] text-gray-400">Nice to have</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+async function analyzeWithGroq(feedbackText, productName) {
   const res = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ feedbackText, productName }),
   })
-
   if (!res.ok) throw new Error('API call failed')
   return res.json()
 }
-
 
 export default function UserDashboard() {
   const { user } = useAuth()
@@ -69,14 +126,13 @@ export default function UserDashboard() {
       let sentiment = 'Neutral', priority = 'Medium', tags = [], ai_summary = ''
 
       try {
-        const result = await analyzeWithGemini(feedbackText, productName)
+        const result = await analyzeWithGroq(feedbackText, productName)
         sentiment = result.sentiment || 'Neutral'
         priority = result.priority || 'Medium'
         tags = result.tags || []
         ai_summary = result.summary || ''
       } catch (aiErr) {
-        console.error('Gemini error:', aiErr)
-        // fallback defaults already set above
+        console.error('AI error:', aiErr)
       }
 
       const { error: insertError } = await supabase.from('feedbacks').insert({
@@ -112,6 +168,10 @@ export default function UserDashboard() {
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-8">
 
+        {/* AI Legend */}
+        <AILegend />
+
+        {/* Submit Form */}
         <div className="card mb-8">
           <h2 className="text-base font-semibold text-gray-900 mb-1">Submit feedback</h2>
           <p className="text-xs text-gray-400 mb-5">AI will instantly tag and analyze your feedback</p>
@@ -164,6 +224,7 @@ export default function UserDashboard() {
           </form>
         </div>
 
+        {/* Past Submissions */}
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Your past submissions</h3>
 
