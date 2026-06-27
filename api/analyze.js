@@ -9,9 +9,9 @@ export default async function handler(req) {
 
   if (!feedbackText) return new Response(JSON.stringify({ error: 'feedbackText required' }), { status: 400 })
 
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = process.env.GROQ_API_KEY
 
-  if (!apiKey) return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not set' }), { status: 500 })
+  if (!apiKey) return new Response(JSON.stringify({ error: 'GROQ_API_KEY not set' }), { status: 500 })
 
   const prompt = `You are a product feedback analyst. Analyze the following feedback and return ONLY a valid JSON object with no extra text, markdown, or explanation.
 
@@ -34,25 +34,30 @@ Rules:
 - No markdown, no extra text, pure JSON only`
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    const groqRes = await fetch(
+      'https://api.groq.com/openai/v1/chat/completions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 200, temperature: 0.1 },
+          model: 'llama-3.1-8b-instant',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 200,
+          temperature: 0.1,
         }),
       }
     )
 
-    const data = await geminiRes.json()
+    const data = await groqRes.json()
 
-    if (!geminiRes.ok) {
-      return new Response(JSON.stringify({ error: 'Gemini API error', details: data }), { status: 500 })
+    if (!groqRes.ok) {
+      return new Response(JSON.stringify({ error: 'Groq API error', details: data }), { status: 500 })
     }
 
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    const raw = data?.choices?.[0]?.message?.content || ''
     const cleaned = raw.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(cleaned)
 
