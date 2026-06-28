@@ -206,12 +206,18 @@ export default function UserDashboard() {
             <div>
               <label className="block text-xs text-gray-500 mb-1.5">Your feedback</label>
               <textarea
-                className="input resize-none h-24"
-                placeholder="Describe your experience in detail…"
-                value={feedbackText}
-                onChange={e => setFeedbackText(e.target.value)}
-                required
-              />
+  className="input resize-none h-24"
+  placeholder="Describe your experience in detail…"
+  value={feedbackText}
+  onChange={e => setFeedbackText(e.target.value)}
+  maxLength={500}
+  required
+/>
+<div className="flex justify-end mt-1">
+  <span className={`text-xs ${feedbackText.length > 450 ? 'text-red-400' : 'text-gray-400'}`}>
+    {feedbackText.length}/500
+  </span>
+</div>
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => { setProductName(''); setFeedbackText('') }} className="btn-secondary">
