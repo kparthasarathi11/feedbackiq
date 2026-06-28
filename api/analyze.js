@@ -30,7 +30,7 @@ Rules:
 - High priority = strong negative emotion, blocking issue, data loss, security
 - Medium priority = friction, confusion, missing feature
 - Low priority = positive feedback, minor suggestions
-- Tags: 2-4 lowercase with hyphens from: bug, ux, performance, feature-request, onboarding, pricing, design, speed, reliability, support
+- Tags: 2-4 lowercase tags that best describe the feedback topic. Choose from: bug, crash, data-loss, login-issue, performance, speed, reliability, feature-request, missingfeature, ui-design, navigation, onboarding, pricing, billing, support, integration, notification, search, export, mobile. Only use ux if the feedback is specifically about user experience flow.  Pick the most specific tag possible, not a generic one.
 - No markdown, no extra text, pure JSON only`
 
   try {
