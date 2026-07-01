@@ -1,8 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+
 import { useAuth } from './hooks/useAuth.jsx'
 import AuthPage from './pages/AuthPage.jsx'
 import UserDashboard from './pages/UserDashboard.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
+import EvalDashboard from './pages/EvalDashboard.jsx'
 
 function ProtectedRoute({ children, requireAdmin }) {
   const { user, profile, loading } = useAuth()
