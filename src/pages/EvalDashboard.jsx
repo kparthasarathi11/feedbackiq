@@ -315,7 +315,7 @@ export default function EvalDashboard() {
           </div>
         ) : (
           <div>
-            <div className="grid grid-cols-[0.3fr_1fr_0.8fr_0.8fr_0.8fr_0.8fr_0.5fr] gap-2 text-xs text-gray-400 font-medium px-3 py-2 border-b border-gray-100 mb-1">
+            <div className="grid grid-cols-[40px_2fr_120px_120px_80px_80px_70px] gap-2 text-xs text-gray-400 font-medium px-3 py-2 border-b border-gray-100 mb-1">
               <div>#</div>
               <div>Feedback</div>
               <div>Expected</div>
