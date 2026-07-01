@@ -27,13 +27,7 @@ const GOLDEN = [
 ]
 
 function StatCard({ label, value, sub, color }) {
-  const colors = {
-    blue: 'text-blue-700',
-    green: 'text-green-700',
-    red: 'text-red-700',
-    amber: 'text-amber-700',
-    gray: 'text-gray-700',
-  }
+  const colors = { blue: 'text-blue-700', green: 'text-green-700', red: 'text-red-700', amber: 'text-amber-700', gray: 'text-gray-700' }
   return (
     <div className="card py-3">
       <div className={`text-2xl font-semibold ${colors[color] || 'text-gray-900'}`}>{value}</div>
@@ -47,7 +41,7 @@ function AccuracyBar({ label, pct, color }) {
   const colors = { blue: 'bg-blue-500', green: 'bg-green-500', amber: 'bg-amber-500' }
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs text-gray-500 w-28 shrink-0">{label}</span>
+      <span className="text-xs text-gray-500 w-36 shrink-0">{label}</span>
       <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
         <div className={`h-2 rounded-full ${colors[color]} transition-all`} style={{ width: `${pct}%` }} />
       </div>
@@ -142,7 +136,6 @@ export default function EvalDashboard() {
 
       newResults.push(row)
       setProgress(i + 1)
-
       await supabase.from('evals').upsert(row, { onConflict: 'id' })
       await new Promise(r => setTimeout(r, 300))
     }
@@ -154,8 +147,7 @@ export default function EvalDashboard() {
 
   const filtered = filter === 'all' ? results
     : filter === 'correct' ? results.filter(r => r.overall_correct)
-    : filter === 'wrong' ? results.filter(r => !r.overall_correct && r.ai_sentiment)
-    : results.filter(r => !r.ai_sentiment)
+    : results.filter(r => !r.overall_correct && r.ai_sentiment)
 
   const labeled = results.filter(r => r.ai_sentiment)
   const correct = results.filter(r => r.overall_correct)
@@ -179,7 +171,7 @@ export default function EvalDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -187,19 +179,17 @@ export default function EvalDashboard() {
             <h1 className="text-lg font-semibold text-gray-900">Model eval dashboard</h1>
             <p className="text-xs text-gray-400 mt-0.5">
               Golden dataset · 20 examples · model: <span className="font-medium text-gray-600">llama-3.1-8b-instant</span>
-              {lastRanAt && <span> · last run {new Date(lastRanAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>}
+              {lastRanAt && (
+                <span> · last run {new Date(lastRanAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+              )}
             </p>
           </div>
-          <button
-            onClick={runEval}
-            disabled={running}
-            className="btn-primary flex items-center gap-2"
-          >
+          <button onClick={runEval} disabled={running} className="btn-primary flex items-center gap-2">
             {running ? `Running ${progress}/20…` : '▶ Run eval'}
           </button>
         </div>
 
-        {/* Progress bar when running */}
+        {/* Progress bar */}
         {running && (
           <div className="mb-6">
             <div className="flex justify-between text-xs text-gray-400 mb-1">
@@ -212,7 +202,7 @@ export default function EvalDashboard() {
           </div>
         )}
 
-        {/* Stats */}
+        {/* Stat cards */}
         <div className="grid grid-cols-4 gap-3 mb-6">
           <StatCard label="Overall accuracy" value={labeled.length ? `${overallPct}%` : '—'} sub={`${correct.length}/${labeled.length} correct`} color="blue" />
           <StatCard label="Sentiment accuracy" value={labeled.length ? `${sentPct}%` : '—'} sub={`${sentCorrect.length}/${labeled.length}`} color="green" />
@@ -237,16 +227,19 @@ export default function EvalDashboard() {
         {Object.keys(categoryBreakdown).length > 0 && (
           <div className="card mb-6">
             <p className="text-xs font-semibold text-gray-700 mb-4">Accuracy by category</p>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {Object.entries(categoryBreakdown).map(([cat, { total, correct }]) => {
                 const pct = Math.round(correct / total * 100)
                 return (
                   <div key={cat} className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500 w-40 shrink-0 truncate">{cat}</span>
+                    <span className="text-xs text-gray-500 w-44 shrink-0 truncate">{cat}</span>
                     <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                      <div className={`h-1.5 rounded-full transition-all ${pct === 100 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-400'}`} style={{ width: `${pct}%` }} />
+                      <div
+                        className={`h-1.5 rounded-full transition-all ${pct === 100 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-400'}`}
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
-                    <span className="text-xs text-gray-500 w-16 text-right">{correct}/{total} · {pct}%</span>
+                    <span className="text-xs text-gray-500 w-20 text-right shrink-0">{correct}/{total} · {pct}%</span>
                   </div>
                 )
               })}
@@ -254,35 +247,37 @@ export default function EvalDashboard() {
           </div>
         )}
 
-        {/* Confusion matrix */}
+        {/* Confusion — where model goes wrong */}
         {labeled.length > 0 && (
           <div className="card mb-6">
             <p className="text-xs font-semibold text-gray-700 mb-4">Where the model goes wrong</p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <p className="text-xs text-gray-400 mb-2">Sentiment mismatches</p>
+                <p className="text-xs text-gray-400 mb-2 font-medium">Sentiment mismatches</p>
                 {results.filter(r => r.ai_sentiment && !r.sentiment_correct).length === 0
-                  ? <p className="text-xs text-green-600">No mismatches</p>
+                  ? <p className="text-xs text-green-600">No mismatches ✓</p>
                   : results.filter(r => r.ai_sentiment && !r.sentiment_correct).map(r => (
-                    <div key={r.id} className="text-xs text-gray-600 mb-1 flex gap-2">
-                      <span className="text-gray-400">#{r.id}</span>
-                      <span className="text-red-500">{r.ai_sentiment}</span>
-                      <span className="text-gray-400">→ expected</span>
-                      <span className="text-green-600">{r.expected_sentiment}</span>
+                    <div key={r.id} className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[10px] text-gray-400 w-6">#{r.id}</span>
+                      <span className="text-xs text-red-500 font-medium">{r.ai_sentiment}</span>
+                      <span className="text-[10px] text-gray-400">expected</span>
+                      <span className="text-xs text-green-600 font-medium">{r.expected_sentiment}</span>
+                      <span className="text-[10px] text-gray-400 truncate">· {r.category}</span>
                     </div>
                   ))
                 }
               </div>
               <div>
-                <p className="text-xs text-gray-400 mb-2">Priority mismatches</p>
+                <p className="text-xs text-gray-400 mb-2 font-medium">Priority mismatches</p>
                 {results.filter(r => r.ai_priority && !r.priority_correct).length === 0
-                  ? <p className="text-xs text-green-600">No mismatches</p>
+                  ? <p className="text-xs text-green-600">No mismatches ✓</p>
                   : results.filter(r => r.ai_priority && !r.priority_correct).map(r => (
-                    <div key={r.id} className="text-xs text-gray-600 mb-1 flex gap-2">
-                      <span className="text-gray-400">#{r.id}</span>
-                      <span className="text-red-500">{r.ai_priority}</span>
-                      <span className="text-gray-400">→ expected</span>
-                      <span className="text-green-600">{r.expected_priority}</span>
+                    <div key={r.id} className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[10px] text-gray-400 w-6">#{r.id}</span>
+                      <span className="text-xs text-red-500 font-medium">{r.ai_priority}</span>
+                      <span className="text-[10px] text-gray-400">expected</span>
+                      <span className="text-xs text-green-600 font-medium">{r.expected_priority}</span>
+                      <span className="text-[10px] text-gray-400 truncate">· {r.category}</span>
                     </div>
                   ))
                 }
@@ -291,104 +286,122 @@ export default function EvalDashboard() {
           </div>
         )}
 
-        {/* Filter + results table */}
-        <div className="flex gap-2 mb-4 flex-wrap">
-          {['all', 'correct', 'wrong'].map(f => (
+        {/* Filter chips */}
+        <div className="flex gap-2 mb-4">
+          {[
+            { key: 'all', label: `All (${results.length})` },
+            { key: 'correct', label: `Correct (${correct.length})` },
+            { key: 'wrong', label: `Wrong (${results.filter(r => !r.overall_correct && r.ai_sentiment).length})` },
+          ].map(f => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={f.key}
+              onClick={() => setFilter(f.key)}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                filter === f ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                filter === f.key ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
               }`}
             >
-              {f === 'all' ? `All (${results.length})` : f === 'correct' ? `Correct (${correct.length})` : `Wrong (${results.filter(r => !r.overall_correct && r.ai_sentiment).length})`}
+              {f.label}
             </button>
           ))}
         </div>
 
+        {/* Results */}
         {loading ? (
           <div className="text-xs text-gray-400 py-8 text-center">Loading last eval run…</div>
         ) : results.length === 0 ? (
           <div className="card text-center py-10">
-            <p className="text-sm text-gray-400 mb-3">No eval runs yet.</p>
-            <p className="text-xs text-gray-400">Click "Run eval" to send all 20 golden examples through your AI pipeline and see accuracy scores.</p>
+            <p className="text-sm text-gray-400 mb-2">No eval runs yet.</p>
+            <p className="text-xs text-gray-400">Click "Run eval" to send all 20 golden examples through your AI and see accuracy scores.</p>
           </div>
         ) : (
-          <div>
-            <div className="grid grid-cols-[40px_2fr_120px_120px_80px_80px_70px] gap-2 text-xs text-gray-400 font-medium px-3 py-2 border-b border-gray-100 mb-1">
-              <div>#</div>
-              <div>Feedback</div>
-              <div>Expected</div>
-              <div>AI output</div>
-              <div>Sentiment</div>
-              <div>Priority</div>
-              <div>Result</div>
-            </div>
-
+          <div className="space-y-3">
             {filtered.map(r => (
               <div key={r.id}>
                 <div
-                  className={`grid grid-cols-[0.3fr_1fr_0.8fr_0.8fr_0.8fr_0.8fr_0.5fr] gap-2 items-center px-3 py-2.5 border-b border-gray-50 hover:bg-white transition-colors rounded-lg cursor-pointer ${!r.ai_sentiment ? 'opacity-40' : ''}`}
+                  className={`card cursor-pointer hover:border-gray-200 transition-colors
+                    ${r.overall_correct && r.ai_sentiment ? 'border-l-4 border-l-green-400' : ''}
+                    ${!r.overall_correct && r.ai_sentiment ? 'border-l-4 border-l-red-400' : ''}
+                    ${!r.ai_sentiment ? 'opacity-50' : ''}
+                  `}
+                  style={{ borderRadius: '0 12px 12px 0' }}
                   onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
                 >
-                  <div className="text-xs text-gray-400">#{r.id}</div>
-                  <div>
-                    <span className="text-xs font-medium text-brand">{r.product}</span>
-                    <p className="text-xs text-gray-600 truncate">{r.feedback_text}</p>
-                    <span className="text-[10px] text-gray-400">{r.category}</span>
-                  </div>
-                  <div className="space-y-1">
-                    <SentimentBadge value={r.expected_sentiment} />
-                    <PriorityBadge value={r.expected_priority} />
-                  </div>
-                  <div className="space-y-1">
-                    <SentimentBadge value={r.ai_sentiment} />
-                    <PriorityBadge value={r.ai_priority} />
-                  </div>
-                  <div>
+                  {/* Top row */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] text-gray-400 font-medium">#{r.id}</span>
+                      <span className="text-xs font-semibold text-brand">{r.product}</span>
+                      <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{r.category}</span>
+                    </div>
                     {r.ai_sentiment && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.sentiment_correct ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                        {r.sentiment_correct ? '✓' : '✗'}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    {r.ai_priority && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.priority_correct ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                        {r.priority_correct ? '✓' : '✗'}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    {r.ai_sentiment && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.overall_correct ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0 ${r.overall_correct ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                         {r.overall_correct ? '✓ Pass' : '✗ Fail'}
                       </span>
                     )}
                   </div>
+
+                  {/* Feedback text — full width */}
+                  <p className="text-sm text-gray-700 leading-relaxed mb-3">{r.feedback_text}</p>
+
+                  {/* Badges row */}
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-400 w-14 shrink-0">Expected</span>
+                      <SentimentBadge value={r.expected_sentiment} />
+                      <PriorityBadge value={r.expected_priority} />
+                    </div>
+                    {r.ai_sentiment && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-400 w-14 shrink-0">AI output</span>
+                        <SentimentBadge value={r.ai_sentiment} />
+                        <PriorityBadge value={r.ai_priority} />
+                      </div>
+                    )}
+                    {r.ai_sentiment && (
+                      <div className="flex items-center gap-3 ml-auto">
+                        <span className={`text-[10px] font-medium ${r.sentiment_correct ? 'text-green-600' : 'text-red-500'}`}>
+                          Sentiment {r.sentiment_correct ? '✓' : '✗'}
+                        </span>
+                        <span className={`text-[10px] font-medium ${r.priority_correct ? 'text-green-600' : 'text-red-500'}`}>
+                          Priority {r.priority_correct ? '✓' : '✗'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
+                {/* Expanded detail */}
                 {expandedId === r.id && (
-                  <div className="mx-3 mb-2 p-3 bg-gray-50 border border-gray-100 rounded-lg text-xs">
-                    <p className="text-gray-600 mb-2">{r.feedback_text}</p>
+                  <div className="mx-1 mb-2 p-4 bg-gray-50 border border-gray-100 rounded-b-xl border-t-0 -mt-2 pt-5">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-gray-400 mb-1">Expected tags</p>
-                        <div className="flex gap-1 flex-wrap">
-                          {(r.expected_tags || []).map(t => <span key={t} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-[10px]">#{t}</span>)}
+                        <p className="text-xs text-gray-400 font-medium mb-1.5">Expected tags</p>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {(r.expected_tags || []).map(t => (
+                            <span key={t} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-medium">#{t}</span>
+                          ))}
                         </div>
                       </div>
                       <div>
-                        <p className="text-gray-400 mb-1">AI tags</p>
-                        <div className="flex gap-1 flex-wrap">
+                        <p className="text-xs text-gray-400 font-medium mb-1.5">AI tags <span className="font-normal">(green = match, red = hallucinated)</span></p>
+                        <div className="flex gap-1.5 flex-wrap">
                           {(r.ai_tags || []).map(t => {
                             const match = (r.expected_tags || []).includes(t)
-                            return <span key={t} className={`px-2 py-0.5 rounded-full text-[10px] ${match ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>#{t}</span>
+                            return (
+                              <span key={t} className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${match ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                #{t}
+                              </span>
+                            )
                           })}
                         </div>
                       </div>
                     </div>
-                    {r.ai_summary && <p className="text-gray-400 mt-2">AI summary: <span className="text-gray-600">{r.ai_summary}</span></p>}
+                    {r.ai_summary && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-xs text-gray-400 font-medium mb-1">AI summary</p>
+                        <p className="text-xs text-gray-600">{r.ai_summary}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
