@@ -18,10 +18,14 @@ export default function Navbar() {
         <div className="w-2 h-2 rounded-full bg-brand"></div>
         <span className="font-semibold text-gray-900 text-sm">FeedbackIQ</span>
         {profile?.role === 'admin' && (
-          <span className="text-xs text-brand bg-brand-light px-2 py-0.5 rounded-full font-medium">
-            Admin
-          </span>
-        )}
+  <>
+    <span className="text-xs text-brand bg-brand-light px-2 py-0.5 rounded-full font-medium">
+      Admin
+    </span>
+    <a href="/admin" className="text-xs text-gray-500 hover:text-brand transition-colors">Dashboard</a>
+    <a href="/eval" className="text-xs text-gray-500 hover:text-brand transition-colors">Evals</a>
+  </>
+)}
       </div>
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-400">{user?.email}</span>
