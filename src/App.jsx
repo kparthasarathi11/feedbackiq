@@ -50,6 +50,10 @@ export default function App() {
         path="/admin"
         element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>}
       />
+       <Route
+        path="/eval"
+        element={<ProtectedRoute requireAdmin><EvalDashboard /></ProtectedRoute>}
+      />
       <Route
         path="*"
         element={
